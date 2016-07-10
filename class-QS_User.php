@@ -4,8 +4,9 @@
  *  This Class is responsible for handling users in Wordpress.
  *  With this Class you can Create - Edit - Get - Delete.
  *
- * @category   Wordpress
- * @author     NivNoiman
+ * @category    Wordpress
+ * @author      NivNoiman
+ * Text-Domain: qs_user
  */
 class QS_User {
     /* ###### Properties ###### */
@@ -125,11 +126,23 @@ class QS_User {
         if( !empty( self::$success ) )
             return self::$success;
     }
-
+    /**
+     * removeMsg
+     * Delete exsisting messages from error and success array.
+     * @param  [string] $type [ success / error ]
+     * @param  string  $key [ The key in the array ( type of message ) ]
+     */
     protected static function removeMsg( $type , $key ){
-        unset( self::${$type}[ $key ] );
+        if( $type == 'error' || $type == 'success' )
+            unset( self::${$type}[ $key ] );
     }
 
+    /**
+     * checkUserItem
+     * Check if the user unique data is allow.
+     * @param  [int/string] $item [ ID / Email ]
+     * @return [array] the type of the item and his value
+     */
     protected static function checkUserItem( $item ){
         $return = array();
         if( is_numeric( $item ) )
@@ -146,6 +159,12 @@ class QS_User {
         return $return;
     }
 
+    /**
+     * outputUser
+     * Dependent your type - this functon return the user information
+     * @param  [string/array] $type [ what type of information - ( array - meta ) ]
+     * @return User Information
+     */
     protected static function outputUser( $type ){
         if( is_array( $type ) ){
             $metaKey = $type;
@@ -173,6 +192,12 @@ class QS_User {
         }
     }
 
+    /**
+     * wrapUser
+     * The wrapper information for the class output ( default - array )
+     * @param  string   $type [ type of output ( for this version just "array" ) ]
+     * @return User Information - dependent the output property
+     */
     protected static function wrapUser( $type = 'array' ){
         $wpUser         = self::$wp_user;
         $wrap_constract = array(
@@ -194,6 +219,14 @@ class QS_User {
         return $outputUserData;
     }
 
+    /**
+     * filterArgs
+     * Clean and organize the args for user - before database's querys.
+     * Use this after you've got all your args for user ( edit / create )
+     * @param  [array] $args [ args to create new user ( email , user_name , password .... ) ]
+     * @param  [bool]  $password [ true - if password is missing, generate new password  ]
+     * @return [array] the args after the filtering ( ready to use )
+     */
     protected static function filterArgs( $args , $password = true ){
         foreach( $args as $argKey => $argValue ){
             if( $argKey == 'email' || $argKey == 'user_email' ){
@@ -215,6 +248,12 @@ class QS_User {
             return self::$error;
     }
 
+    /**
+     * isUserExist
+     * Check if user exist
+     * @param  [ array ] $args [ user data args - ( for check existing you'll need -user_email- or -user_name- ) ]
+     * @return boolean true/false ( exist / not exist )
+     */
     protected static function isUserExist( $args ){
         if( !empty( $args['user_email'] ) || !empty( $args['user_name'] ) ){
             if( !username_exists( $args['user_name'] ) and email_exists( $args['user_email'] ) == false )
@@ -226,6 +265,11 @@ class QS_User {
         }
     }
 
+    /**
+     * checkAndInsertMeta
+     * Check user args and insert to database ( after user exist )
+     * @param  [array] $args [ args to edit user ( email , user_name , password .... ) - For this function don't forget to include the user ID]
+     */
     protected static function checkAndInsertMeta( $args ){
         $exclude_keys = array(
             'user_name',
@@ -253,6 +297,11 @@ class QS_User {
         }
     }
 
+    /**
+     * sendEmail
+     * Send user registering information via email.
+     * @param  [array] $args [ user information data ]
+     */
     protected static function sendEmail( $args ){
         $to = $args['user_email'];
         $subject  = sprintf( __( '%s - Registration Info', 'qs_user' ), get_bloginfo('name') );
