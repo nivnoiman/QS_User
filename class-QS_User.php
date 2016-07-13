@@ -25,7 +25,9 @@ class QS_User {
      */
     function __construct( $args = NULL ){
         if( !empty( $args ) && is_array( $args ) )
-            $this->create( $args );
+            return $this->create( $args );
+        elseif( is_user_logged_in() )
+            return $this->userData = $this->get( get_current_user_id() );
     }
     /* ###### Functions ###### */
     /**
