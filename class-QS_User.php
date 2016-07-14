@@ -27,7 +27,7 @@ class QS_User {
         if( !empty( $args ) && is_array( $args ) )
             return $this->create( $args );
         elseif( is_user_logged_in() )
-            return $this->userData = $this->get( get_current_user_id() );
+            return $this->get( get_current_user_id() );
     }
     /* ###### Functions ###### */
     /**
@@ -185,8 +185,12 @@ class QS_User {
                 if( empty( $metaKey ) )
                     return get_user_meta( self::$wp_user->ID);
                 else{
-                    foreach( $metaKey as $key )
-                        $return[ $key ] = get_user_meta( self::$wp_user->ID , $key );
+                    foreach( $metaKey as $key => $metaType ){
+                        if( $metaType == 'repeater' )
+                            $return[ $key ] = self::getRepeaterMetaData( $key );
+                        else
+                            $return[ $key ] = get_user_meta( self::$wp_user->ID , $key );
+                    }
                     return $return;
                 }
             default:
@@ -297,6 +301,18 @@ class QS_User {
                 }
             }
         }
+    }
+
+    protected static function getRepeaterMetaData( $key ){
+        global $wpdb;
+        $userID = self::$wp_user->ID;
+        $sql = "SELECT um.meta_key , um.meta_value
+                FROM $wpdb->usermeta um
+                WHERE 1 = 1
+                AND um.user_id = $userID
+                AND um.meta_key LIKE '{$key}_%'
+                ";
+        return $results = $wpdb->get_results( $sql );
     }
 
     /**
