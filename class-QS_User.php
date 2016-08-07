@@ -111,6 +111,34 @@ class QS_User {
     }
 
     /**
+     * login
+     * Create login attemption - if all args true - signon
+     * @param  [array] $args [ args to edit user ( user_login , user_password , remember .... ) ]
+     * @return [bool] true if success , false if error
+     */
+    public function login( $args ){
+        $args = self::filterArgs( $args , false );
+        if( !empty( $args['user_login'] ) && !empty( $args['user_password'] ) ){
+            if ( is_email( $args['user_login'] ) ){
+                $args['user_login'] = $this->get( $args['user_login'] );
+                if( !empty( $args['user_login'] ) && !is_wp_error( $args['user_login'] ) )
+                    $args['user_login'] = $args['user_login']['user_name'];
+            }
+            $user = wp_signon( $args, false );
+            if( !empty( $user ) && !is_wp_error( $user ) ){
+                self::$success['loggedin'] = __( 'Success - Please Wait....', 'qs_user' );
+                return true;
+            } else{
+                self::$error['exist'] = __( 'This user not exist', 'qs_user' );
+                return false;
+            }
+        } else{
+            self::$error['empty'] = __( "Empty Fields", "qs_user" );
+            return false;
+        }
+    }
+
+    /**
      * error
      * Retrive all your errors from your last action
      * @return [array]
@@ -261,8 +289,8 @@ class QS_User {
      * @return boolean true/false ( exist / not exist )
      */
     protected static function isUserExist( $args ){
-        if( !empty( $args['user_email'] ) || !empty( $args['user_name'] ) ){
-            if( !username_exists( $args['user_name'] ) and email_exists( $args['user_email'] ) == false )
+        if( !empty( $args['user_email'] ) || !empty( $args['user_name'] ) || !empty( $args['user_login'] ) ){
+            if(( !username_exists( $args['user_name'] ) || !username_exists( $args['user_login'] ) ) and email_exists( $args['user_email'] ) == false )
                 return false;
             else {
                 self::$error['exist'] = __( "This user already exist.", "qs_user" );
