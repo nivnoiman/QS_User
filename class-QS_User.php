@@ -53,7 +53,7 @@ class QS_User {
     public function create( $args , $return = 'ID' ){
         $args = self::filterArgs( $args );
         if( !self::isUserExist( $args ) ){
-            if( $args['ID'] = wp_create_user( $args['user_name'], $args['password'], $args['user_email'] ) ){
+            if( $args['ID'] = wp_create_user( $args['user_name'], $args['user_password'], $args['user_email'] ) ){
                 self::checkAndInsertMeta( $args );
                 self::$success['create'] = __( 'New User Created.', 'qs_user' );
                 if( self::$passwordFlag )
@@ -118,6 +118,7 @@ class QS_User {
      */
     public function login( $args ){
         $args = self::filterArgs( $args , false );
+
         if( !empty( $args['user_login'] ) && !empty( $args['user_password'] ) ){
             if ( is_email( $args['user_login'] ) ){
                 $args['user_login'] = $this->get( $args['user_login'] );
@@ -246,7 +247,8 @@ class QS_User {
         foreach( $wrap_constract as $type => $path ){
             if( is_array( $path ) ){
                 $outputUserData[ $type ] = $wpUser->{$path[0]};
-                $outputUserData[ $type ] = $outputUserData[ $type ][ $path[1] ];
+                if( !empty( $outputUserData[ $type ][ $path[1] ]) )
+                    $outputUserData[ $type ] = $outputUserData[ $type ][ $path[1] ];
             } else
                 $outputUserData[ $type ] = $wpUser->{$path};
         }
@@ -269,11 +271,13 @@ class QS_User {
                 else
                     self::$error['email'] = __( "Illegal email", "qs_user" );
             }
-            elseif( $argKey != 'password')
+            elseif( $argKey == 'password' || $argKey == 'user_password' )
+                $args[ 'user_password' ] = $argValue;
+            else
                 $args[ $argKey ] = sanitize_text_field( $argValue );
         }
-        if( empty( $args['password'] ) && $password ){
-            $args['password'] = wp_generate_password( $length = 12, $include_standard_special_chars = false );
+        if( empty( $args['user_password'] ) && $password ){
+            $args['user_password'] = wp_generate_password( $length = 12, $include_standard_special_chars = false );
             self::$passwordFlag = true;
         }
         if( empty( self::$error ) )
@@ -288,9 +292,9 @@ class QS_User {
      * @param  [ array ] $args [ user data args - ( for check existing you'll need -user_email- or -user_name- ) ]
      * @return boolean true/false ( exist / not exist )
      */
-    protected static function isUserExist( $args ){
+    public static function isUserExist( $args ){
         if( !empty( $args['user_email'] ) || !empty( $args['user_name'] ) || !empty( $args['user_login'] ) ){
-            if(( !username_exists( $args['user_name'] ) || !username_exists( $args['user_login'] ) ) and email_exists( $args['user_email'] ) == false )
+            if( ( !username_exists( $args['user_name'] ) || ( !empty( $args['user_login'] ) && !username_exists( $args['user_login'] ) ) ) and email_exists( $args['user_email'] ) == false )
                 return false;
             else {
                 self::$error['exist'] = __( "This user already exist.", "qs_user" );
